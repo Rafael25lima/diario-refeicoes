@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diário de refeições</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F6F4;--ink:#17191A;--mut:#666D70;--line:#D5D9D6;--card:#fff;--acc:#2250E8}
+@media(prefers-color-scheme:dark){:root{--bg:#131515;--ink:#EEF0EF;--mut:#98A0A3;--line:#2E3335;--card:#1B1E1F;--acc:#6F92FF}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 Archivo,system-ui,sans-serif}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:22px;font-weight:800;margin:0 0 12px}
+h2{font-size:15px;font-weight:600;margin:20px 0 6px}
+input,select,button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px;min-width:0}
+button{cursor:pointer}
+button.p{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.tabs{display:flex;margin-bottom:10px;border-bottom:2px solid var(--line)}
+.tabs button{flex:1;border:0;border-radius:0;background:none;font-weight:600;color:var(--mut);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--acc)}
+.sst{color:var(--mut);font-size:12px;margin:0 0 10px}
+.row{display:flex;gap:8px;margin-bottom:8px}
+.row>*{flex:1}
+.row>.s{flex:0 0 auto}
+.date{align-items:center}
+.date input{text-align:center}
+.label{background:var(--card);border:2px solid var(--ink);padding:10px 12px;margin:14px 0}
+.label .t{font-weight:800;font-size:15px;border-bottom:8px solid var(--ink);padding-bottom:4px}
+.kc{display:flex;justify-content:space-between;align-items:baseline;border-bottom:4px solid var(--ink);padding:6px 0}
+.kc b{font-size:44px;font-weight:800;line-height:1}
+.bar{height:6px;background:var(--line);margin:8px 0}
+.bar i{display:block;height:100%;background:var(--acc)}
+.mac{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)}
+.mac:last-child{border:0}
+.goal{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--mut);font-size:14px}
+.goal input{width:90px;padding:6px}
+.ent{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.ent small{color:var(--mut);display:block}
+.ent button{border:0;background:none;color:var(--mut);padding:4px 8px}
+.mt{font-weight:600;display:flex;justify-content:space-between;margin-top:14px}
+.mt span{color:var(--mut);font-weight:400}
+details{margin-top:24px}
+summary{cursor:pointer;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}
+td:first-child,th:first-child{text-align:left}
+.empty{color:var(--mut);padding:8px 0}
+.note{color:var(--mut);font-size:13px;padding:8px 0}
+.lb{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--mut)}
+.mo{padding:10px 0;border-bottom:1px solid var(--line)}
+.mo small{display:block;color:var(--mut)}
+.mh{display:flex;justify-content:space-between;font-size:17px;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>Diário de refeições</h1>
+<nav class="tabs" aria-label="Seções">
+  <button id="t1" class="on" aria-pressed="true">Diário</button>
+  <button id="t2" aria-pressed="false">Comparativo</button>
+</nav>
+<div id="sst" class="sst" role="status"></div>
+
+<div id="v1">
+  <div class="row date">
+    <button class="s" id="prev" aria-label="Dia anterior">&lt;</button>
+    <input type="date" id="date">
+    <button class="s" id="next" aria-label="Próximo dia">&gt;</button>
+  </div>
+
+  <section class="label" aria-label="Total do dia">
+    <div class="t">Total do dia</div>
+    <div class="kc"><b id="kcal">0</b><span>kcal</span></div>
+    <div class="bar"><i id="pb" style="width:0"></i></div>
+    <div class="goal"><label for="goal">Meta de calorias</label><input type="number" id="goal" min="500" step="50"><span id="rest"></span></div>
+    <div class="bar"><i id="pbp" style="width:0"></i></div>
+    <div class="goal"><label for="pgoal">Meta de proteína (g)</label><input type="number" id="pgoal" min="20" step="5"><span id="prest"></span></div>
+    <div class="mac"><span>Proteína</span><b id="tp">0 g</b></div>
+    <div class="mac"><span>Carboidrato</span><b id="tc">0 g</b></div>
+    <div class="mac"><span>Gordura</span><b id="tg">0 g</b></div>
+  </section>
+
+  <h2>Peso da manhã</h2>
+  <div class="row"><input type="number" id="wm" step="0.1" min="20" inputmode="decimal" placeholder="Peso (kg)" aria-label="Peso da manhã em kg"></div>
+  <div class="note" style="padding:0 0 4px">Ao acordar, depois do xixi, sem roupa e na mesma balança.</div>
+  <div id="wsum" class="empty" style="padding-top:0"></div>
+  <details style="margin-top:8px"><summary>Histórico de peso (14 dias)</summary><table id="wtb"></table></details>
+
+  <h2>Adicionar alimento</h2>
+  <div class="row"><select id="meal" aria-label="Refeição"></select></div>
+  <div class="row"><input id="food" list="fl" placeholder="Buscar alimento" autocomplete="off" aria-label="Alimento"><datalist id="fl"></datalist></div>
+  <div class="row">
+    <input type="number" id="qty" min="0" step="any" inputmode="decimal" placeholder="Quantidade" aria-label="Quantidade">
+    <select id="unit" aria-label="Unidade"><option value="g">gramas</option></select>
+  </div>
+  <div class="row"><button class="p" id="add">Adicionar</button></div>
+  <div id="err" class="empty" role="alert"></div>
+
+  <div id="log"></div>
+
+  <details>
+    <summary>Tabela de alimentos (por 100 g)</summary>
+    <table id="tb"></table>
+    <h2>Cadastrar alimento</h2>
+    <div class="row"><input id="nn" placeholder="Nome (ex.: Feijão preto cozido)"></div>
+    <div class="row">
+      <input id="nk" type="number" step="any" placeholder="kcal">
+      <input id="np" type="number" step="any" placeholder="Prot. g">
+      <input id="nc" type="number" step="any" placeholder="Carb. g">
+      <input id="ng" type="number" step="any" placeholder="Gord. g">
+    </div>
+    <div class="row"><input id="nu" type="number" step="any" placeholder="Peso de 1 unidade em g (opcional)"></div>
+    <div class="row"><button id="addf">Salvar alimento</button></div>
+  </details>
+</div>
+
+<div id="v2" hidden>
+  <div id="cmp"></div>
+
+  <details id="bkd">
+    <summary>Bulking: comparativo início × fim</summary>
+    <div class="row" style="margin-top:8px">
+      <label class="lb">Início<input type="date" id="bs"></label>
+      <label class="lb">Fim<input type="date" id="be"></label>
+    </div>
+    <div class="row"><button id="bstart">Iniciar bulking hoje (30 dias)</button></div>
+    <div id="bres"></div>
+  </details>
+
+  <details id="syd">
+    <summary>Planilha Google (sincronização)</summary>
+    <div class="note">Cole o link do Apps Script (termina em /exec). Os dados passam a ser salvos na planilha e aparecem em qualquer aparelho que usar o mesmo link.</div>
+    <div class="row"><input id="su" type="url" placeholder="https://script.google.com/macros/s/.../exec" aria-label="Link do Apps Script"></div>
+    <div class="row"><button id="ssave">Salvar link</button><button id="snow">Sincronizar agora</button></div>
+  </details>
+</div>
+<div class="note" style="margin-top:24px;text-align:center">Versão de 03/10 às 02h · planilha já conectada</div>
+</main>
+
+<script>
+// Opcional: cole aqui o link /exec do Apps Script. Vale para todo aparelho que abrir este site
+// (no iPhone, o ícone da tela inicial tem armazenamento separado do Safari).
+const SYNC_URL="https://script.google.com/macros/s/AKfycbz2h5mIFHMBz47DTbDgI4LBRFYC3pmTQXKKztNYvr6-q1FyupQABFybrhIYmShsttpq/exec";
+
+// n = nome, k = kcal, p = proteína, c = carboidrato, g = gordura (por 100 g), u = peso de 1 unidade em g (0 = sem unidade)
+// Valores aproximados, baseados na tabela TACO. Edite à vontade.
+const BASE=[
+{n:"Arroz branco cozido",k:128,p:2.5,c:28.1,g:0.2,u:0},
+{n:"Arroz integral cozido",k:124,p:2.6,c:25.8,g:1,u:0},
+{n:"Feijão carioca cozido",k:76,p:4.8,c:13.6,g:0.5,u:0},
+{n:"Frango peito grelhado",k:159,p:32,c:0,g:2.5,u:0},
+{n:"Frango empanado",k:260,p:16,c:16,g:14,u:0},
+{n:"Ovo cozido",k:146,p:13.3,c:0.6,g:9.5,u:50},
+{n:"Ovo frito",k:240,p:15.6,c:1.2,g:18.6,u:50},
+{n:"Carne patinho grelhado",k:219,p:35.9,c:0,g:7.3,u:0},
+{n:"Carne moída refogada",k:212,p:26.7,c:0,g:10.9,u:0},
+{n:"Batata-doce cozida",k:77,p:0.6,c:18.4,g:0.1,u:0},
+{n:"Batata inglesa cozida",k:52,p:1.2,c:11.9,g:0,u:0},
+{n:"Macarrão cozido",k:102,p:3.4,c:19.9,g:0.5,u:0},
+{n:"Pão francês",k:300,p:8,c:58.6,g:3.1,u:50},
+{n:"Pão de forma",k:253,p:9.4,c:49,g:3.7,u:25},
+{n:"Banana prata",k:98,p:1.3,c:26,g:0.1,u:70},
+{n:"Maçã",k:56,p:0.3,c:15.2,g:0,u:130},
+{n:"Leite integral",k:61,p:3.2,c:4.7,g:3.3,u:0},
+{n:"Aveia em flocos",k:394,p:13.9,c:66.6,g:8.5,u:0},
+{n:"Queijo mussarela",k:330,p:22.6,c:3,g:25.2,u:20},
+{n:"Azeite de oliva",k:884,p:0,c:0,g:100,u:13},
+{n:"Pasta de amendoim",k:588,p:25,c:20,g:50,u:15},
+{n:"Alface",k:11,p:1.4,c:1.7,g:0.2,u:0},
+{n:"Tomate",k:15,p:1.1,c:3.1,g:0.2,u:0},
+{n:"Shake do pote (5 scoops + 250 ml leite + 250 ml água)",k:746,p:32.2,c:111.3,g:19.1,u:100,dose:true},
+{n:"Brócolis cozido",k:25,p:2.1,c:4.4,g:0.5,u:0}
+];
+const MEALS=["Café da manhã","Almoço","Lanche","Jantar"];
+const MN=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const $=id=>document.getElementById(id);
+const ld=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r1=n=>Math.round(n*10)/10;
+const r2=n=>Math.round(n*100)/100;
+
+let custom=ld("custom",[]), logs=ld("logs",{}), goal=ld("goal",3300), pgoal=ld("pgoal",130), weights=ld("weights",{}), bulk=ld("bulk",{s:"",e:""});
+let syncUrl=ld("syncUrl","")||SYNC_URL, dirty=ld("dirty",false), synced=ld("synced",false), ver=0;
+
+const save=(k,v)=>{sv(k,v);touch()};
+const foods=()=>BASE.concat(custom);
+const find=n=>foods().find(f=>f.n.toLowerCase()===n.trim().toLowerCase());
+const today=()=>new Date().toLocaleDateString("sv-SE");
+const shift=d=>{const x=new Date($("date").value+"T12:00:00");x.setDate(x.getDate()+d);$("date").value=x.toLocaleDateString("sv-SE");render()};
+const fw=n=>n.toFixed(1).replace(".",",");
+const sgn=v=>(v>=0?"+":"")+fw(v);
+const dm=x=>x.slice(8)+"/"+x.slice(5,7);
+const dkey=(d,off)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+off);return x.toLocaleDateString("sv-SE")};
+const hasW=x=>weights[x]&&weights[x].m>0;
+const wavg=(d,from,to)=>{const v=[];for(let i=from;i<=to;i++){const k=dkey(d,-i);if(hasW(k))v.push(weights[k].m)}return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+
+// ---------- resumo mês a mês ----------
+function months(){
+  const by={};
+  Object.keys(weights).sort().forEach(d=>{if(hasW(d)){const k=d.slice(0,7);(by[k]=by[k]||[]).push([d,weights[d].m])}});
+  let prev=null;
+  return Object.keys(by).sort().map(k=>{
+    const a=by[k], first=a[0], last=a[a.length-1];
+    const avg=a.reduce((s,x)=>s+x[1],0)/a.length;
+    const kd=Object.keys(logs).filter(d=>d.slice(0,7)===k&&d<today()&&logs[d].length);
+    const sum=f=>kd.reduce((s,d)=>s+logs[d].reduce((q,e)=>q+e[f],0),0);
+    const o={k,first,last,avg,n:a.length,gain:last[1]-first[1],vsPrev:prev==null?null:avg-prev,
+      kcal:kd.length?sum("k")/kd.length:null,prot:kd.length?sum("p")/kd.length:null};
+    prev=avg;return o;
+  });
+}
+
+function renderCmp(){
+  const ms=months(), box=$("cmp");
+  if(!ms.length){box.innerHTML='<div class="empty">Registre o peso da manhã na aba Diário para ver o comparativo mês a mês.</div>';return}
+  const all=Object.keys(weights).filter(hasW).sort();
+  const d0=all[0], d1=all[all.length-1], w0=weights[d0].m, w1=weights[d1].m;
+  let h=`<section class="label" aria-label="Total desde a primeira pesagem"><div class="t">Desde a 1ª pesagem</div><div class="kc"><b>${sgn(w1-w0)}</b><span>kg</span></div><div class="mac"><span>${dm(d0)}</span><b>${fw(w0)} kg</b></div><div class="mac"><span>${dm(d1)}</span><b>${fw(w1)} kg</b></div></section><h2>Mês a mês</h2>`;
+  ms.slice().reverse().forEach(m=>{
+    const y=m.k.slice(0,4), mo=+m.k.slice(5);
+    h+=`<div class="mo"><div class="mh"><span>${MN[mo-1]} ${y}</span><span>${sgn(m.gain)} kg</span></div>`+
+      `<small>1ª pesagem ${fw(m.first[1])} kg (${dm(m.first[0])}) → última ${fw(m.last[1])} kg (${dm(m.last[0])})</small>`+
+      `<small>Média do mês ${fw(m.avg)} kg${m.vsPrev==null?"":" · "+sgn(m.vsPrev)+" kg vs mês anterior"}</small>`+
+      `<small>${m.kcal==null?"":Math.round(m.kcal)+" kcal/dia · "+Math.round(m.prot)+" g de proteína/dia · "}${m.n} pesagens</small></div>`;
+  });
+  h+='<div class="note">Ganho no mês = última pesagem − primeira pesagem do mês. A diferença entre as médias é a mais confiável, porque o peso varia de um dia para o outro.</div>';
+  box.innerHTML=h;
+}
+
+// ---------- bulking início × fim ----------
+function bulkRender(){
+  $("bs").value=bulk.s||"";$("be").value=bulk.e||"";
+  const box=$("bres");
+  if(!bulk.s||!bulk.e||bulk.e<bulk.s){box.innerHTML='<div class="empty">Defina o início e o fim do bulking para ver o comparativo.</div>';return}
+  const days=[];
+  for(let i=0;i<400;i++){const x=dkey(bulk.s,i);if(x>bulk.e)break;days.push(x)}
+  const wk=days.filter(hasW);
+  const rows=[["Período",`${dm(bulk.s)} a ${dm(bulk.e)} (${days.length} dias)`]];
+  if(wk.length<2){rows.push(["Peso","registre a manhã em pelo menos 2 dias"])}
+  else{
+    const a=wk[0], b=wk[wk.length-1], wa=weights[a].m, wb=weights[b].m;
+    rows.push(["Peso inicial",`${fw(wa)} kg (${dm(a)})`],["Peso final",`${fw(wb)} kg (${dm(b)})`],["Variação",`${sgn(wb-wa)} kg`]);
+    const span=(new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5;
+    if(span>=7)rows.push(["Ritmo",`${sgn((wb-wa)/span*7)} kg/semana`]);
+    if(days.length>=14){
+      const mean=l=>{const v=l.filter(hasW).map(x=>weights[x].m);return v.length?v.reduce((s,y)=>s+y,0)/v.length:null};
+      const f1=mean(days.slice(0,7)), f2=mean(days.slice(-7));
+      if(f1!=null&&f2!=null)rows.push(["Média 1ª semana",`${fw(f1)} kg`],["Média última semana",`${fw(f2)} kg`],["Variação das médias",`${sgn(f2-f1)} kg`]);
+    }
+  }
+  const kd=days.filter(x=>x<today()&&(logs[x]||[]).length);
+  if(kd.length){
+    const sum=k=>kd.reduce((s,x)=>s+logs[x].reduce((q,e)=>q+e[k],0),0);
+    rows.push(["Média de calorias",`${Math.round(sum("k")/kd.length)} kcal/dia`],["Média de proteína",`${Math.round(sum("p")/kd.length)} g/dia`],["Dias com registro",`${kd.length} (sem contar hoje)`]);
+  }
+  box.innerHTML="<table>"+rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")+"</table>";
+}
+
+// ---------- tela do dia ----------
+function render(){
+  const day=logs[$("date").value]||[];
+  const t={k:0,p:0,c:0,g:0};
+  day.forEach(e=>{t.k+=e.k;t.p+=e.p;t.c+=e.c;t.g+=e.g});
+  $("kcal").textContent=Math.round(t.k);
+  $("tp").textContent=r1(t.p)+" g";$("tc").textContent=r1(t.c)+" g";$("tg").textContent=r1(t.g)+" g";
+  $("pb").style.width=Math.min(100,t.k/goal*100)+"%";
+  const left=Math.round(goal-t.k);
+  $("rest").textContent=left>=0?"faltam "+left+" kcal":"passou "+(-left)+" kcal";
+  $("pbp").style.width=Math.min(100,t.p/pgoal*100)+"%";
+  const pl=Math.round(pgoal-t.p);
+  $("prest").textContent=pl>0?"faltam "+pl+" g":"meta batida";
+  const dk=$("date").value, wd=weights[dk]||{};
+  $("wm").value=wd.m||"";
+  const wa=wavg(dk,0,6), wb=wavg(dk,7,13);
+  $("wsum").textContent=wa==null?"Registre o peso da manhã para ver a média semanal.":
+    "Média de 7 dias: "+fw(wa)+" kg"+(wb==null?"":" · semana anterior: "+fw(wb)+" kg · "+sgn(wa-wb)+" kg");
+  let wh="<tr><th>Dia</th><th>Peso</th></tr>";
+  for(let i=0;i<14;i++){const k=dkey(dk,-i);wh+=`<tr><td>${dm(k)}</td><td>${hasW(k)?fw(weights[k].m)+" kg":"–"}</td></tr>`}
+  $("wtb").innerHTML=wh;
+  let h="";
+  MEALS.forEach(m=>{
+    const es=day.map((e,i)=>({e,i})).filter(x=>x.e.m===m);
+    if(!es.length)return;
+    const sub=es.reduce((a,x)=>a+x.e.k,0);
+    h+=`<div class="mt">${esc(m)}<span>${Math.round(sub)} kcal</span></div>`;
+    es.forEach(({e,i})=>{
+      const q=e.d?`${e.q} dose`:e.ut==="un"?`${e.q} un (${r1(e.gr)} g)`:`${r1(e.gr)} g`;
+      h+=`<div class="ent"><div>${esc(e.n)}<small>${q} · P ${r1(e.p)} · C ${r1(e.c)} · G ${r1(e.g)}</small></div><div><b>${Math.round(e.k)}</b> kcal <button data-i="${i}" aria-label="Remover ${esc(e.n)}">✕</button></div></div>`;
+    });
+  });
+  $("log").innerHTML=h||'<div class="empty">Nenhum alimento neste dia. Adicione o primeiro acima.</div>';
+  $("log").querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{
+    day.splice(+b.dataset.i,1);logs[$("date").value]=day;save("logs",logs);render();
+  });
+  bulkRender();renderCmp();
+}
+
+function renderFoods(){
+  $("fl").innerHTML=foods().map(f=>`<option value="${esc(f.n)}">`).join("");
+  $("tb").innerHTML="<tr><th>Alimento</th><th>kcal</th><th>P</th><th>C</th><th>G</th><th></th></tr>"+
+    foods().map((f,i)=>`<tr><td>${esc(f.n)}${f.dose?" <small>(valores por dose)</small>":f.u?` <small>(1 un = ${f.u} g)</small>`:""}</td><td>${f.k}</td><td>${f.p}</td><td>${f.c}</td><td>${f.g}</td><td>${i>=BASE.length?`<button data-c="${i-BASE.length}" aria-label="Remover ${esc(f.n)}">✕</button>`:""}</td></tr>`).join("");
+  $("tb").querySelectorAll("button[data-c]").forEach(b=>b.onclick=()=>{
+    custom.splice(+b.dataset.c,1);save("custom",custom);renderFoods();
+  });
+}
+
+function setUnits(){
+  const f=find($("food").value), u=$("unit");
+  u.innerHTML='<option value="g">gramas</option>'+(f&&f.u?`<option value="un">${f.dose?"dose":`unidade (${f.u} g)`}</option>`:"");
+  if(f&&f.dose)u.value="un";
+}
+
+function tab(n){
+  $("v1").hidden=n!==1;$("v2").hidden=n!==2;
+  $("t1").classList.toggle("on",n===1);$("t2").classList.toggle("on",n===2);
+  $("t1").setAttribute("aria-pressed",n===1);$("t2").setAttribute("aria-pressed",n===2);
+  if(n===2)renderCmp();
+  window.scrollTo(0,0);
+}
+
+// ---------- sincronização com a planilha Google ----------
+const hhmm=()=>new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+const setStatus=t=>{$("sst").textContent=syncUrl?t:"Dados salvos só neste aparelho. Conecte a planilha na aba Comparativo."};
+const nk=o=>Object.keys(o||{}).length;
+const stateObj=()=>{
+  const w={};Object.keys(weights).forEach(d=>{if(hasW(d))w[d]={m:weights[d].m}});
+  return {logs,weights:w,custom,goal,pgoal,bulk};
+};
+const resumoRows=()=>months().map(m=>[m.k,m.first[1],m.last[1],r2(m.gain),r2(m.avg),m.vsPrev==null?"":r2(m.vsPrev),m.kcal==null?"":Math.round(m.kcal),m.prot==null?"":Math.round(m.prot),m.n]);
+
+let pushing=false, pushT=null, retryT=null;
+function touch(){
+  ver++;
+  if(!syncUrl)return;
+  dirty=true;sv("dirty",true);
+  setStatus("Alterações pendentes…");
+  clearTimeout(pushT);pushT=setTimeout(push,1200);
+}
+async function push(){
+  if(!syncUrl||pushing)return;
+  pushing=true;const v=ver;setStatus("Sincronizando…");
+  try{
+    const r=await fetch(syncUrl,{method:"POST",body:JSON.stringify({action:"save",state:stateObj(),resumo:resumoRows()})});
+    const j=await r.json();
+    if(!j.ok)throw new Error(j.error||"falha");
+    pushing=false;synced=true;sv("synced",true);
+    if(v===ver){dirty=false;sv("dirty",false);setStatus("Sincronizado às "+hhmm())}else push();
+  }catch(e){
+    pushing=false;
+    setStatus("Não sincronizou. Nova tentativa em 20 s (confira o link e a internet).");
+    clearTimeout(retryT);retryT=setTimeout(push,20000);
+  }
+}
+function apply(s){
+  logs=s.logs||{};weights=s.weights||{};custom=s.custom||[];
+  if(s.goal)goal=s.goal;
+  if(s.pgoal)pgoal=s.pgoal;
+  if(s.bulk&&(s.bulk.s||s.bulk.e))bulk=s.bulk;
+  sv("logs",logs);sv("weights",weights);sv("custom",custom);sv("goal",goal);sv("pgoal",pgoal);sv("bulk",bulk);
+  $("goal").value=goal;$("pgoal").value=pgoal;renderFoods();setUnits();render();
+}
+async function pull(){
+  if(!syncUrl)return;
+  if(dirty){push();return}
+  const v0=ver;setStatus("Buscando da planilha…");
+  try{
+    const r=await fetch(syncUrl+(syncUrl.includes("?")?"&":"?")+"action=get&t="+Date.now());
+    const j=await r.json();
+    if(!j.ok)throw new Error(j.error||"falha");
+    if(ver!==v0){push();return}
+    const s=j.state||{};
+    const remoteEmpty=!nk(s.logs)&&!nk(s.weights)&&!(s.custom||[]).length;
+    const localEmpty=!nk(logs)&&!nk(weights)&&!custom.length;
+    if(remoteEmpty){
+      synced=true;sv("synced",true);
+      if(localEmpty)setStatus("Planilha conectada");else touch();
+      return;
+    }
+    if(!localEmpty&&!synced){
+      if(!confirm("A planilha já tem dados.\n\nOK = usar os dados da planilha (substitui os deste aparelho).\nCancelar = enviar os deste aparelho para a planilha.")){
+        synced=true;sv("synced",true);touch();return;
+      }
+    }
+    apply(s);synced=true;sv("synced",true);setStatus("Sincronizado às "+hhmm());
+  }catch(e){
+    setStatus("Não consegui falar com a planilha. Confira o link e se o acesso é \"Qualquer pessoa\".");
+  }
+}
+
+// ---------- eventos ----------
+$("t1").onclick=()=>tab(1);
+$("t2").onclick=()=>tab(2);
+$("food").oninput=setUnits;
+$("add").onclick=()=>{
+  const f=find($("food").value), q=parseFloat($("qty").value), ut=$("unit").value;
+  if(!f){$("err").textContent="Escolha um alimento da lista ou cadastre um novo em \"Tabela de alimentos\".";return}
+  if(!(q>0)){$("err").textContent="Informe a quantidade.";return}
+  $("err").textContent="";
+  const gr=ut==="un"?q*f.u:q, x=gr/100;
+  const day=logs[$("date").value]||[];
+  day.push({m:$("meal").value,n:f.n,q,ut,gr,d:f.dose?1:0,k:f.k*x,p:f.p*x,c:f.c*x,g:f.g*x});
+  logs[$("date").value]=day;save("logs",logs);
+  $("food").value="";$("qty").value="";setUnits();render();
+};
+$("addf").onclick=()=>{
+  const n=$("nn").value.trim(), k=parseFloat($("nk").value);
+  if(!n||isNaN(k)){$("err").textContent="Cadastro precisa de nome e kcal por 100 g.";return}
+  $("err").textContent="";
+  custom.push({n,k,p:parseFloat($("np").value)||0,c:parseFloat($("nc").value)||0,g:parseFloat($("ng").value)||0,u:parseFloat($("nu").value)||0});
+  save("custom",custom);
+  ["nn","nk","np","nc","ng","nu"].forEach(i=>$(i).value="");
+  renderFoods();
+};
+$("goal").onchange=()=>{goal=parseFloat($("goal").value)||3300;save("goal",goal);render()};
+$("pgoal").onchange=()=>{pgoal=parseFloat($("pgoal").value)||130;save("pgoal",pgoal);render()};
+$("wm").onchange=()=>{
+  const d=$("date").value, v=parseFloat($("wm").value), w=weights[d]||{};
+  if(v>0)w.m=v;else delete w.m;
+  weights[d]=w;save("weights",weights);render();
+};
+$("bs").onchange=()=>{bulk.s=$("bs").value;if(bulk.s&&(!bulk.e||bulk.e<bulk.s))bulk.e=dkey(bulk.s,29);save("bulk",bulk);bulkRender()};
+$("be").onchange=()=>{bulk.e=$("be").value;save("bulk",bulk);bulkRender()};
+$("bstart").onclick=()=>{bulk={s:today(),e:dkey(today(),29)};save("bulk",bulk);bulkRender()};
+$("date").onchange=render;
+$("prev").onclick=()=>shift(-1);
+$("next").onclick=()=>shift(1);
+$("ssave").onclick=()=>{
+  const u=$("su").value.trim();
+  if(u&&!/^https:\/\/script\.google(usercontent)?\.com\//.test(u)){alert("Esse link não parece ser do Apps Script. Ele deve começar com https://script.google.com/");return}
+  syncUrl=u;sv("syncUrl",u);synced=false;sv("synced",false);dirty=false;sv("dirty",false);
+  setStatus("Conectando…");
+  if(u)pull();
+};
+$("snow").onclick=()=>{if(!syncUrl){setStatus("");return}if(dirty)push();else pull()};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&syncUrl)pull()});
+addEventListener("online",()=>{if(dirty)push()});
+
+// ---------- início ----------
+$("meal").innerHTML=MEALS.map(m=>`<option>${m}</option>`).join("");
+const hr=new Date().getHours();
+$("meal").value=hr<10?MEALS[0]:hr<15?MEALS[1]:hr<18?MEALS[2]:MEALS[3];
+$("date").value=today();
+$("goal").value=goal;
+$("pgoal").value=pgoal;
+$("su").value=syncUrl;
+renderFoods();render();
+setStatus(dirty?"Alterações pendentes…":"Planilha conectada");
+pull();
+</script>
+</body>
+</html>
